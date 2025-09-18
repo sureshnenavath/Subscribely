@@ -162,8 +162,9 @@ JWT_AUTH_REFRESH_COOKIE = 'refresh_token'
 JWT_AUTH_SECURE = config('JWT_AUTH_SECURE', default=False, cast=bool)  # Set to True in production with HTTPS
 JWT_AUTH_HTTPONLY = True
 _samesite_env = config('JWT_AUTH_SAMESITE', default='Lax')
-# Allow the environment to use the literal string 'None' to mean Python None
+# If environment sets 'None' (case-insensitive) we want the literal string 'None'
+# so Django will emit the SameSite=None attribute (required for cross-site cookies).
 if isinstance(_samesite_env, str) and _samesite_env.lower() in ('none', 'null'):
-    JWT_AUTH_SAMESITE = None
+    JWT_AUTH_SAMESITE = 'None'
 else:
     JWT_AUTH_SAMESITE = _samesite_env
