@@ -6,6 +6,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 from django.contrib.auth import login
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 def set_jwt_cookies(response, user):
     """Set JWT tokens in HTTP-only cookies"""
@@ -51,7 +54,15 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    serializer = UserLoginSerializer(data=request.data)
+    data = request.data.copy()
+    # Accept either 'identifier', or fallback to 'email' or 'username' keys from client
+    if 'identifier' not in data:
+        if 'email' in data:
+            data['identifier'] = data.get('email')
+        elif 'username' in data:
+            data['identifier'] = data.get('username')
+
+    serializer = UserLoginSerializer(data=data)
     if serializer.is_valid():
         user = serializer.validated_data['user']
         login(request, user)
@@ -63,7 +74,13 @@ def login_view(request):
         
         set_jwt_cookies(response, user)
         return response
-    
+    # Log validation errors to help debug failed login attempts (do not log passwords)
+    try:
+        identifier = data.get('identifier')
+    except Exception:
+        identifier = '<unknown>'
+    logger.debug('Login failed for identifier=%s errors=%s', identifier, serializer.errors)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])

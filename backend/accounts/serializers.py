@@ -22,23 +22,46 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    identifier = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, attrs):
-        email = attrs.get('email')
+        identifier = attrs.get('identifier')
         password = attrs.get('password')
 
-        if email and password:
-            user = authenticate(username=email, password=password)
-            if not user:
-                raise serializers.ValidationError('Invalid credentials')
-            if not user.is_active:
-                raise serializers.ValidationError('User account is disabled')
-            attrs['user'] = user
-        else:
-            raise serializers.ValidationError('Must include email and password')
-        
+        if not identifier or not password:
+            raise serializers.ValidationError('Must include identifier and password')
+
+        # First try authenticating treating the identifier as the model's USERNAME_FIELD
+        # (in this project USERNAME_FIELD is 'email')
+        user = authenticate(username=identifier, password=password)
+
+        # If that fails and identifier looks like an email, try to resolve the user by email
+        if not user and '@' in identifier:
+            try:
+                user_obj = User.objects.get(email__iexact=identifier)
+                # Since USERNAME_FIELD is email, pass the email to authenticate
+                user = authenticate(username=user_obj.email, password=password)
+            except User.DoesNotExist:
+                user = None
+
+        # If still no user and identifier does not look like an email, it may be the legacy
+        # 'username' field. Find the user by username and authenticate using their email
+        # because authenticate expects the USERNAME_FIELD value.
+        if not user and '@' not in identifier:
+            try:
+                user_obj = User.objects.get(username__iexact=identifier)
+                user = authenticate(username=user_obj.email, password=password)
+            except User.DoesNotExist:
+                user = None
+
+        if not user:
+            raise serializers.ValidationError('Invalid credentials')
+
+        if not user.is_active:
+            raise serializers.ValidationError('User account is disabled')
+
+        attrs['user'] = user
         return attrs
 
 class UserSerializer(serializers.ModelSerializer):

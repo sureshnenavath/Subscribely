@@ -1,193 +1,122 @@
-# Subscribely - Subscription Management Platform
+# Subscribely — Runbook & Quick Start
 
-A full-stack subscription management platform built with Django REST Framework and React, featuring Razorpay payment integration.
+This short README focuses on how to run the project locally (PowerShell examples) and quick checks for the two key flows (authentication and payments).
 
-## Features
+Repository layout (top-level):
+- `backend/` — Django REST API + Razorpay integration (SQLite dev DB)
+- `frontend/` — React (Vite) single-page app (ReactJS / JSX)
 
-### Backend (Django + DRF)
-- JWT Authentication with HTTP-only cookies
-- User registration and login
-- Subscription plan management
-- Razorpay payment integration
-- Webhook handling for payment events
-- SQLite database
-- Admin panel for managing plans and users
+---
+## Quick commands (PowerShell)
 
-### Frontend (React + TypeScript)
-- Modern, responsive UI with Tailwind CSS
-- Dark/Light theme toggle
-- User authentication flows
-- Subscription management dashboard
-- Interactive plans page with payment integration
-- Payment history tracking
-- Real-time updates via webhooks
+Open a PowerShell window and use the commands below from the repository root.
 
-## Tech Stack
+### Backend (Django)
 
-**Backend:**
-- Django 4.2
-- Django REST Framework
-- JWT Authentication
-- Razorpay Python SDK
-- SQLite Database
+1) Enter backend folder and create/activate virtualenv:
 
-**Frontend:**
-- React 18
-- TypeScript
-- Tailwind CSS
-- Axios for API calls
-- React Router for navigation
-- Lucide React for icons
-
-## Setup Instructions
-
-### Backend Setup
-
-1. Navigate to the backend directory:
-```bash
-cd backend
-```
-
-2. Create a virtual environment:
-```bash
+```powershell
+Set-Location -Path .\backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+.\venv\Scripts\Activate
 ```
 
-3. Install dependencies:
-```bash
+2) Install dependencies and run migrations:
+
+```powershell
 pip install -r requirements.txt
-```
-
-4. Create environment file:
-```bash
-cp .env.example .env
-```
-
-5. Run migrations:
-```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
-6. Load initial data:
-```bash
-python manage.py loaddata fixtures/initial_data.json
-```
+3) (Optional) Load fixtures and create a superuser:
 
-7. Create superuser:
-```bash
+```powershell
+python manage.py loaddata fixtures/initial_data.json
 python manage.py createsuperuser
 ```
 
-8. Start the development server:
-```bash
-python manage.py runserver
+4) Run dev server (bind to all interfaces on port 8000):
+
+```powershell
+python manage.py runserver 0.0.0.0:8000
 ```
 
-The backend will be available at `http://localhost:8000`
+Backend API base URL: http://localhost:8000
 
-### Frontend Setup
+### Frontend (ReactJS + Vite)
 
-1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
+Open a separate PowerShell window and run:
 
-2. Install dependencies:
-```bash
+```powershell
+Set-Location -Path .\frontend
 npm install
+npm run dev    # start dev server (Vite) — default port 5173
+# or build for production
+npm run build
 ```
 
-3. Start the development server:
-```bash
-npm run dev
-```
+When developing, ensure the backend (`http://localhost:8000`) is running so API calls work.
 
-The frontend will be available at `http://localhost:3000`
+### Run with Docker (optional)
 
-## API Endpoints
+If you prefer Docker, use the compose file in `backend` (if configured):
 
-### Authentication
-- `POST /api/auth/register/` - User registration
-- `POST /api/auth/login/` - User login
-- `POST /api/auth/logout/` - User logout
-- `GET /api/auth/profile/` - Get user profile
-
-### Plans
-- `GET /api/plans/` - List all subscription plans
-
-### Subscriptions
-- `GET /api/subscriptions/list/` - List user subscriptions
-- `POST /api/subscriptions/subscribe/` - Subscribe to a plan
-- `POST /api/subscriptions/<id>/cancel/` - Cancel subscription
-- `POST /api/subscriptions/<id>/renew/` - Renew subscription
-
-### Payments
-- `GET /api/payments/` - List user payments
-- `POST /api/webhooks/razorpay/` - Razorpay webhook endpoint
-
-## Razorpay Integration
-
-### Test Credentials
-- **Key ID:** `rzp_test_RIcK2VIpRxbMbg`
-- **Key Secret:** `4G78tnRQoskxKS0bbA6i88Vj`
-
-### Test Cards
-- **Success:** 4111 1111 1111 1111
-- **Failure:** 4000 0000 0000 0002
-
-### UPI Testing
-- Use any UPI ID for testing (e.g., test@paytm)
-
-## Database Schema
-
-The application uses SQLite with the following main tables:
-- `users` - User accounts (extends Django's User model)
-- `plans` - Subscription plans
-- `subscriptions` - User subscriptions
-- `payments` - Payment records
-- `webhook_events` - Webhook event logs
-
-## Deployment
-
-### Using Docker
-
-1. Build and run with Docker Compose:
-```bash
-cd backend
+```powershell
+Set-Location -Path .\backend
 docker-compose up --build
 ```
 
-### Manual Deployment
+### Run tests
 
-1. Set environment variables for production
-2. Configure static files serving
-3. Set up SSL certificates
-4. Configure webhook URLs in Razorpay dashboard
+Backend tests (PowerShell):
 
-## Testing
-
-### Backend Tests
-```bash
-cd backend
+```powershell
+Set-Location -Path .\backend
+.\venv\Scripts\Activate
 python manage.py test
 ```
 
-### Frontend Tests
-```bash
-cd frontend
+Frontend tests (if available):
+
+```powershell
+Set-Location -Path .\frontend
 npm test
 ```
 
-## Contributing
+---
+## Useful troubleshooting commands
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+- List any remaining TypeScript files under `frontend/src`:
 
-## License
+```powershell
+Get-ChildItem -Path .\frontend\src -Recurse -Include *.ts,*.tsx | Select-Object FullName
+```
 
-This project is licensed under the MIT License.
+- Show Vite dev server output (run in the frontend folder when dev server is running):
+
+```powershell
+npm run dev
+```
+
+- Check backend logs in the Django terminal for webhook/auth errors.
+
+---
+## Key behaviors to validate
+
+- Login: the frontend sends `{ identifier, password }` and the backend accepts either an email or a username in `identifier`.
+  - Example payload: `{ "identifier": "user@example.com", "password": "secret" }`.
+
+- Payments: payment objects returned by `GET /api/payments/` include `razorpay_payment_id` (the transaction id). The frontend Payments UI displays that field.
+
+---
+## Where to look if something breaks
+
+- Frontend source: `frontend/src` (JSX/JS files)
+- Frontend backups of original TSX: `frontend/backup-tsx`
+- Backend Django app: `backend/` (manage.py, settings, apps)
+
+---
+If you'd like, I can now:
+- finish the TypeScript purge under `frontend/src` (move any remaining .ts/.tsx files to `frontend/backup-tsx`),
+- run `npm run build` and report results, or
+- start the dev servers and perform a quick smoke test (you'll need to have Docker or local Python/Node available).
