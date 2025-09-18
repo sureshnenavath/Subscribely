@@ -19,7 +19,8 @@ export const SubscriptionProvider = ({ children }) => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const activeSubscription = subscriptions.find(sub => sub.status === 'active') || null;
+  // Be defensive: ensure `subscriptions` is an array before calling .find
+  const activeSubscription = Array.isArray(subscriptions) ? subscriptions.find(sub => sub && sub.status === 'active') || null : null;
 
   const fetchData = async () => {
     if (!isAuthenticated) return;
@@ -32,9 +33,10 @@ export const SubscriptionProvider = ({ children }) => {
         api.get('/payments/')
       ]);
 
-      setPlans(plansRes.data);
-      setSubscriptions(subscriptionsRes.data);
-      setPayments(paymentsRes.data);
+  // Coerce responses to arrays to avoid runtime errors if API returns an object
+  setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
+  setSubscriptions(Array.isArray(subscriptionsRes.data) ? subscriptionsRes.data : []);
+  setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
