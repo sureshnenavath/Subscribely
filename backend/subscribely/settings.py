@@ -158,6 +158,7 @@ RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET', default='4G78tnRQoskxKS0bbA6
 # Cookie settings for JWT
 JWT_AUTH_COOKIE = 'access_token'
 JWT_AUTH_REFRESH_COOKIE = 'refresh_token'
-JWT_AUTH_SECURE = False  # Set to True in production with HTTPS
+# Use environment variables to control cookie security in production
+JWT_AUTH_SECURE = config('JWT_AUTH_SECURE', default=False, cast=bool)  # Set to True in production with HTTPS
 JWT_AUTH_HTTPONLY = True
-JWT_AUTH_SAMESITE = 'Lax'
+JWT_AUTH_SAMESITE = config('JWT_AUTH_SAMESITE', default='Lax')
