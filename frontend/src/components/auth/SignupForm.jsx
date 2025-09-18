@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card } from '../ui/Card';
+import { Button } from '../ui/Button.jsx';
+import { Input } from '../ui/Input.jsx';
+import { Card } from '../ui/Card.jsx';
 import { User, Mail, Lock, AlertCircle } from 'lucide-react';
 
-export const SignupForm: React.FC = () => {
+export const SignupForm = () => {
   const { signup, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -23,11 +23,11 @@ export const SignupForm: React.FC = () => {
     password: '',
     confirm_password: ''
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    const newErrors = {};
 
     if (!formData.first_name) newErrors.first_name = 'First name is required';
     if (!formData.last_name) newErrors.last_name = 'Last name is required';
@@ -43,7 +43,7 @@ export const SignupForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -56,14 +56,14 @@ export const SignupForm: React.FC = () => {
         navigate('/dashboard');
       }
     } catch (error) {
-      const msg = (error as any)?.detail || (error as any)?.message || 'An error occurred. Please try again.';
+      const msg = error?.detail || error?.message || 'An error occurred. Please try again.';
       setErrors({ general: msg });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value

@@ -1,16 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { SubscriptionProvider } from './contexts/SubscriptionContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { Header } from './components/layout/Header';
-import { LoginForm } from './components/auth/LoginForm';
-import { SignupForm } from './components/auth/SignupForm';
-import { Dashboard } from './components/dashboard/Dashboard';
-import { PlansPage } from './components/plans/PlansPage';
-import { PaymentsPage } from './components/payments/PaymentsPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { NotFound } from './components/NotFound';
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import { SubscriptionProvider } from './contexts/SubscriptionContext.jsx';
+import { ThemeProvider } from './contexts/ThemeContext.jsx';
+import { Header } from './components/layout/Header.jsx';
+import { LoginForm } from './components/auth/LoginForm.jsx';
+import { SignupForm } from './components/auth/SignupForm.jsx';
+import { Dashboard } from './components/dashboard/Dashboard.jsx';
+import { PlansPage } from './components/plans/PlansPage.jsx';
+import { PaymentsPage } from './components/payments/PaymentsPage.jsx';
+import { ProtectedRoute } from './components/ProtectedRoute.jsx';
+import { NotFound } from './components/NotFound.jsx';
 
 function App() {
   return (

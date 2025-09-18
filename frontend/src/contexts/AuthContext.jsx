@@ -1,35 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  is_staff: boolean;
-  is_superuser: boolean;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (userData: SignupData) => Promise<boolean>;
-  logout: () => void;
-  isAuthenticated: boolean;
-  loading: boolean;
-}
-
-interface SignupData {
-  first_name: string;
-  last_name: string;
-  email: string;
-  username: string;
-  password: string;
-  confirm_password: string;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -39,12 +11,11 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Run the initial auth check once on mount
     let mounted = true;
     if (mounted) checkAuthStatus();
     return () => { mounted = false; };
@@ -61,33 +32,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (identifier, password) => {
     try {
-      const response = await api.post('/auth/login/', { email, password });
+  // Send identifier (email or username) and password. Backend will resolve it.
+  const payload = { identifier, password };
+  const response = await api.post('/auth/login/', payload);
       setUser(response.data.user);
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error:', error);
-      // Normalize the backend error to an object with `detail` string
       const data = error.response?.data;
       let detail = 'Login failed';
       if (data) {
         if (typeof data === 'string') detail = data;
         else if (data.detail) detail = data.detail;
         else if (data.non_field_errors) detail = data.non_field_errors.join(' ');
-        else detail = JSON.stringify(data);
+        else if (typeof data === 'object') {
+          const firstKey = Object.keys(data)[0];
+          const val = data[firstKey];
+          if (Array.isArray(val)) detail = val.join(' ');
+          else detail = String(val);
+        } else detail = JSON.stringify(data);
       }
       throw { detail };
     }
   };
 
-  const signup = async (userData: SignupData): Promise<boolean> => {
+  const signup = async (userData) => {
     try {
-      // Use /auth/register/ to match assessment naming
       const response = await api.post('/auth/register/', userData);
       setUser(response.data.user);
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Signup error:', error);
       const data = error.response?.data;
       let detail = 'Signup failed';
@@ -96,7 +72,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         else if (data.detail) detail = data.detail;
         else if (data.non_field_errors) detail = data.non_field_errors.join(' ');
         else if (typeof data === 'object') {
-          // Choose first field error message if present
           const firstKey = Object.keys(data)[0];
           const val = data[firstKey];
           if (Array.isArray(val)) detail = val.join(' ');

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { Button } from '../ui/Button';
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useTheme } from '../../contexts/ThemeContext.jsx';
+import { Button } from '../ui/Button.jsx';
 import { Moon, Sun, User, LogOut, CreditCard } from 'lucide-react';
 
-export const Header: React.FC = () => {
+export const Header = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -74,7 +74,7 @@ export const Header: React.FC = () => {
                 <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                   Login
                 </Button>
-        <Button size="sm" onClick={() => navigate('/register')}>
+                <Button size="sm" onClick={() => navigate('/register')}>
                   Sign Up
                 </Button>
               </div>

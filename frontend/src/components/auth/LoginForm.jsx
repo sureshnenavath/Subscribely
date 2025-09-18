@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card } from '../ui/Card';
+import { Button } from '../ui/Button.jsx';
+import { Input } from '../ui/Input.jsx';
+import { Card } from '../ui/Card.jsx';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 
-export const LoginForm: React.FC = () => {
+export const LoginForm = () => {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
@@ -15,23 +15,23 @@ export const LoginForm: React.FC = () => {
     }
   }, [authLoading, isAuthenticated, navigate]);
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: ''
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
     setLoading(true);
 
     try {
-      const success = await login(formData.email, formData.password);
+  const success = await login(formData.identifier, formData.password);
       if (success) {
         navigate('/dashboard');
       }
-    } catch (error: any) {
+    } catch (error) {
       const msg = error?.detail || error?.message || 'An error occurred. Please try again.';
       setErrors({ general: msg });
     } finally {
@@ -39,7 +39,7 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -70,10 +70,10 @@ export const LoginForm: React.FC = () => {
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <Input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={formData.email}
+                type="text"
+                name="identifier"
+                placeholder="Enter email or username"
+                value={formData.identifier}
                 onChange={handleChange}
                 className="pl-10"
                 required

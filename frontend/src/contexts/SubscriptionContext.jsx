@@ -1,49 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext.jsx';
 import { api } from '../services/api';
 
-interface Plan {
-  id: number;
-  name: string;
-  monthly_price: number;
-  yearly_price: number;
-  features: string[];
-  trial_days: number;
-}
-
-interface Subscription {
-  id: number;
-  plan: Plan;
-  status: 'active' | 'cancelled' | 'expired' | 'pending';
-  start_date: string;
-  end_date: string;
-  cancel_date?: string;
-  created_at: string;
-}
-
-interface Payment {
-  id: number;
-  amount: number | string;
-  method: 'UPI' | 'Card';
-  status: 'success' | 'failed' | 'pending';
-  razorpay_payment_id?: string;
-  payment_date: string;
-  plan?: string;
-}
-
-interface SubscriptionContextType {
-  plans: Plan[];
-  subscriptions: Subscription[];
-  payments: Payment[];
-  activeSubscription: Subscription | null;
-  loading: boolean;
-  subscribeToPlan: (planId: number, isYearly: boolean) => Promise<boolean>;
-  cancelSubscription: (subscriptionId: number) => Promise<boolean>;
-  renewSubscription: (subscriptionId: number) => Promise<boolean>;
-  fetchData: () => void;
-}
-
-const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+const SubscriptionContext = createContext(undefined);
 
 export const useSubscription = () => {
   const context = useContext(SubscriptionContext);
@@ -53,11 +12,11 @@ export const useSubscription = () => {
   return context;
 };
 
-export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const SubscriptionProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [plans, setPlans] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const activeSubscription = subscriptions.find(sub => sub.status === 'active') || null;
@@ -83,16 +42,14 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  const subscribeToPlan = async (planId: number, isYearly: boolean): Promise<boolean> => {
+  const subscribeToPlan = async (planId, isYearly) => {
     try {
       setLoading(true);
-      // Use checkout/create-session endpoint to match assessment API naming
       const response = await api.post('/checkout/create-session/', {
         plan_id: planId,
         is_yearly: isYearly
       });
 
-      // Initialize Razorpay payment
       const options = {
         key: response.data.razorpay_key_id,
         amount: response.data.amount * 100,
@@ -101,21 +58,15 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
         description: response.data.description,
         order_id: response.data.razorpay_order_id,
         prefill: response.data.prefill,
-        theme: {
-          color: '#3b82f6'
-        },
-        handler: function (response: any) {
+        theme: { color: '#3b82f6' },
+        handler: function (response) {
           console.log('Payment successful:', response);
-          fetchData(); // Refresh data after successful payment
+          fetchData();
         },
-        modal: {
-          ondismiss: function () {
-            console.log('Payment modal closed');
-          }
-        }
+        modal: { ondismiss: function () { console.log('Payment modal closed'); } }
       };
 
-      const razorpay = new (window as any).Razorpay(options);
+      const razorpay = new window.Razorpay(options);
       razorpay.open();
       
       return true;
@@ -127,7 +78,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  const cancelSubscription = async (subscriptionId: number): Promise<boolean> => {
+  const cancelSubscription = async (subscriptionId) => {
     try {
       setLoading(true);
       await api.post(`/subscriptions/${subscriptionId}/cancel/`);
@@ -141,7 +92,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  const renewSubscription = async (subscriptionId: number): Promise<boolean> => {
+  const renewSubscription = async (subscriptionId) => {
     try {
       setLoading(true);
       await api.post(`/subscriptions/${subscriptionId}/renew/`);
