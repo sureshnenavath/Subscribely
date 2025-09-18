@@ -1,5 +1,11 @@
 # Subscribely — Runbook & Quick Start
 
+Project: Subscribely
+
+Tools: Django, React, Vite, Tailwind CSS, SQLite (dev)
+
+Author: Nenavath Suresh — https://github.com/sureshnenavath/Subscribely
+
 This short README focuses on how to run the project locally (PowerShell examples) and quick checks for the two key flows (authentication and payments).
 
 Repository layout (top-level):
@@ -59,32 +65,53 @@ When developing, ensure the backend (`http://localhost:8000`) is running so API 
 
 ### Run with Docker (optional)
 
-If you prefer Docker, use the compose file in `backend` (if configured):
+If you prefer Docker, there is a production-ready `backend/Dockerfile.prod` and a CI workflow that builds and publishes an image to GitHub Container Registry (GHCR). To run locally with Docker Desktop installed:
 
 ```powershell
 Set-Location -Path .\backend
-docker-compose up --build
+docker build -t subscribely-backend:local -f Dockerfile.prod .
+docker run -p 8000:8000 --env-file .env subscribely-backend:local
 ```
 
-### Run tests
+Ensure `.env` contains required variables (SECRET_KEY, DATABASE_URL if using Postgres, RAZORPAY keys, etc.). If `DATABASE_URL` is not provided the project will use the local `db.sqlite3` for development.
 
-Backend tests (PowerShell):
+### Deployment (short)
 
-```powershell
-Set-Location -Path .\backend
-.\venv\Scripts\Activate
-python manage.py test
+CI: I added a GitHub Actions workflow at `.github/workflows/backend-build-and-push.yml` that builds `backend/Dockerfile.prod` and pushes the image to GitHub Container Registry (GHCR) as `ghcr.io/<owner>/subscribely-backend:latest` on pushes to `main`.
+
+Options to host the backend (free/low-cost tiers):
+- Render (easy Docker/GitHub deploy, managed Postgres available)
+- Fly.io (container-first platform, generous free tier)
+- Railway (quick database + web service)
+
+Typical deploy steps:
+1. Push to `main` to trigger the workflow which builds and publishes the backend image to GHCR.
+2. On Render/Fly, create a new web service and point it to the GHCR image (or connect the repo directly).
+3. Add environment variables (SECRET_KEY, DEBUG=False, ALLOWED_HOSTS, DATABASE_URL, RAZORPAY keys) in the host UI.
+4. Ensure CORS/ALLOWED_HOSTS include your frontend domain (for Netlify: `https://<your-site>.netlify.app`).
+
+If you want, I can add a `render.yaml` or `fly.toml` for one-click deploys, or add CI steps to automatically deploy to a chosen provider.
+
+## Netlify frontend: configure environment variables
+
+When deploying the frontend to Netlify you should set the API base URL as a build environment variable so the production bundle knows where to call your backend.
+
+- Variable name (Vite): VITE_API_BASE_URL
+- Example value (Render backend): https://subscribely-backend.onrender.com/api
+
+Steps:
+1. In Netlify, open your site → Site settings → Build & deploy → Environment → Environment variables.
+2. Add `VITE_API_BASE_URL` with the backend base URL (include the `/api` path if your frontend expects `/api` as the mount point).
+3. Trigger a deploy (rebuild) — Netlify will include the value at build time and your production bundle will use it.
+
+Proxy alternative (optional): If you prefer not to set a build-time variable you can configure Netlify to proxy API calls to your backend using a `_redirects` file placed in `frontend/public` or the built `dist`:
+
+```
+/api/*  https://subscribely-backend.onrender.com/:splat  200
 ```
 
-Frontend tests (if available):
+This keeps the frontend calling `/api/...` in production while Netlify forwards those requests to your backend host. Remember to configure CORS on the backend to allow the Netlify domain if you do not proxy.
 
-```powershell
-Set-Location -Path .\frontend
-npm test
-```
-
----
-## Useful troubleshooting commands
 
 - List any remaining TypeScript files under `frontend/src`:
 
@@ -118,5 +145,5 @@ npm run dev
 ---
 If you'd like, I can now:
 - finish the TypeScript purge under `frontend/src` (move any remaining .ts/.tsx files to `frontend/backup-tsx`),
-- run `npm run build` and report results, or
-- start the dev servers and perform a quick smoke test (you'll need to have Docker or local Python/Node available).
+- add `render.yaml` or `fly.toml` and instructions for one-command deploys, or
+- create a small README section showing how to pull the GHCR image and deploy it to Render.

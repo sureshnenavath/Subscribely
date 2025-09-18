@@ -102,7 +102,7 @@ export const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">${activeSubscription.plan.monthly_price}<span className="text-sm text-gray-600 dark:text-gray-400 font-normal">/month</span></p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{activeSubscription.plan.monthly_price}<span className="text-sm text-gray-600 dark:text-gray-400 font-normal">/month</span></p>
                   </div>
                 </div>
 
