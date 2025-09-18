@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=your-secret-key-here
+      - RAZORPAY_KEY_ID=rzp_test_RIcK2VIpRxbMbg
+      - RAZORPAY_KEY_SECRET=4G78tnRQoskxKS0bbA6i88Vj
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - db
+
+  db:
+    image: sqlite3
+    volumes:
+      - ./db.sqlite3:/db/db.sqlite3
