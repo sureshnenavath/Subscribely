@@ -161,4 +161,9 @@ JWT_AUTH_REFRESH_COOKIE = 'refresh_token'
 # Use environment variables to control cookie security in production
 JWT_AUTH_SECURE = config('JWT_AUTH_SECURE', default=False, cast=bool)  # Set to True in production with HTTPS
 JWT_AUTH_HTTPONLY = True
-JWT_AUTH_SAMESITE = config('JWT_AUTH_SAMESITE', default='Lax')
+_samesite_env = config('JWT_AUTH_SAMESITE', default='Lax')
+# Allow the environment to use the literal string 'None' to mean Python None
+if isinstance(_samesite_env, str) and _samesite_env.lower() in ('none', 'null'):
+    JWT_AUTH_SAMESITE = None
+else:
+    JWT_AUTH_SAMESITE = _samesite_env
