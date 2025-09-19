@@ -149,9 +149,24 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173', cast=lambda v: [s.strip() for s in v.split(',')])
+
+# Allowlist of origins that may make cross-site requests (add your production frontend)
+# Include Netlify frontend by default so deployed frontend can communicate with the API.
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://subscribely.netlify.app',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Trusted origins for CSRF checks (needed for cross-site POSTs to Django views/forms)
+# Add your frontend and any proxy/domains used in production here.
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://subscribely.netlify.app,https://subscribely.onrender.com',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # Razorpay Configuration
 RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID', default='rzp_test_RIcK2VIpRxbMbg')
@@ -170,3 +185,22 @@ if isinstance(_samesite_env, str) and _samesite_env.lower() in ('none', 'null'):
     JWT_AUTH_SAMESITE = 'None'
 else:
     JWT_AUTH_SAMESITE = _samesite_env
+
+# --- Production-safe defaults -------------------------------------------------
+# When running with DEBUG=False assume we're in production behind HTTPS and that
+# cookies must be sent cross-site. These defaults can be overridden by setting
+# the environment variables JWT_AUTH_SECURE and JWT_AUTH_SAMESITE explicitly on
+# the host (Render, etc.).
+if not DEBUG:
+    # Ensure cookies are only sent over HTTPS in production
+    JWT_AUTH_SECURE = config('JWT_AUTH_SECURE', default=True, cast=bool)
+    # Force SameSite=None so browsers will send cookies in cross-site requests
+    # (frontend on Netlify -> backend on Render). Allow env override if provided.
+    try:
+        _prod_samesite = config('JWT_AUTH_SAMESITE')
+    except Exception:
+        _prod_samesite = None
+    if _prod_samesite:
+        JWT_AUTH_SAMESITE = _prod_samesite
+    else:
+        JWT_AUTH_SAMESITE = 'None'

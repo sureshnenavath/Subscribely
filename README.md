@@ -147,3 +147,30 @@ If you'd like, I can now:
 - finish the TypeScript purge under `frontend/src` (move any remaining .ts/.tsx files to `frontend/backup-tsx`),
 - add `render.yaml` or `fly.toml` and instructions for one-command deploys, or
 - create a small README section showing how to pull the GHCR image and deploy it to Render.
+
+## Deployment notes (cookies, CORS, CSRF)
+
+If your frontend is deployed on a different origin than your backend (common with Netlify + Render), browsers will treat requests as cross-site. The app uses HttpOnly JWT cookies for authentication which requires two things to work in production:
+
+- The browser must allow sending cookies on cross-site requests (frontend must send requests with credentials and backend must set CORS to allow credentials).
+- The cookie must be set with SameSite=None and Secure attributes so modern browsers will include it in cross-site requests over HTTPS.
+
+Checklist for Render (backend) + Netlify (frontend):
+
+1. On Netlify set `VITE_API_BASE_URL` to your backend API base (e.g. `https://subscribely.onrender.com/api`) and rebuild the site.
+2. On Render ensure these env vars are set in the service:
+  - `DEBUG=False`
+  - `ALLOWED_HOSTS=subscribely.onrender.com` (or comma-separated hosts)
+  - `CSRF_TRUSTED_ORIGINS=https://subscribely.netlify.app` (if not already present)
+  - `CORS_ALLOWED_ORIGINS=https://subscribely.netlify.app` (if not already present)
+  - Optionally: `JWT_AUTH_SECURE=True` and `JWT_AUTH_SAMESITE=None` (the settings default to these in production if DEBUG=False)
+3. Confirm the frontend's axios instance uses `withCredentials: true` (it does by default in this repo).
+4. If you use a proxy configuration (Netlify _redirects) ensure CORS is not needed because requests will be same-origin.
+
+Troubleshooting tips:
+
+- If login appears to succeed but you are immediately redirected to the login page, open the browser devtools → Network and check the response to `/auth/login/` — make sure the response includes `Set-Cookie` headers and that the cookie attributes include `SameSite=None; Secure`.
+- If `Set-Cookie` is present but the browser does not store the cookie, it's usually because `Secure` is required for SameSite=None; ensure your backend uses HTTPS in production.
+- After logout, if a new signup does not appear in the admin, check backend logs for errors and ensure the frontend is sending the correct payload and that the request is not blocked by CORS/CSRF.
+
+If you'd like, I can add a small deploy script or a Render `render.yaml` that documents these environment variables and automates a correct configuration.
