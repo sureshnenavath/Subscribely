@@ -12,7 +12,6 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor
 api.interceptors.request.use(
   (config) => {
     return config;
@@ -22,7 +21,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -31,7 +29,6 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const requestUrl = error.config?.url || '';
     if (status === 401) {
-      // Do not force a redirect for the profile check (prevents redirect loop on mount)
       if (!requestUrl.includes('/auth/profile')) {
         window.location.href = '/login';
       }
