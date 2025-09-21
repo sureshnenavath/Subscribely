@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (identifier, password) => {
     try {
-  // Send identifier (email or username) and password. Backend will resolve it.
   const payload = { identifier, password };
   const response = await api.post('/auth/login/', payload);
       setUser(response.data.user);
