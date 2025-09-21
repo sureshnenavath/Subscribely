@@ -18,8 +18,7 @@ export const SubscriptionProvider = ({ children }) => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Be defensive: ensure `subscriptions` is an array before calling .find
+  
   const activeSubscription = Array.isArray(subscriptions) ? subscriptions.find(sub => sub && sub.status === 'active') || null : null;
 
   const fetchData = async () => {
@@ -33,7 +32,6 @@ export const SubscriptionProvider = ({ children }) => {
         api.get('/payments/')
       ]);
 
-  // Coerce responses to arrays to avoid runtime errors if API returns an object
   setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
   setSubscriptions(Array.isArray(subscriptionsRes.data) ? subscriptionsRes.data : []);
   setPayments(Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
